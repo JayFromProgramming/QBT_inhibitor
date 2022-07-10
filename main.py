@@ -36,6 +36,9 @@ class qbtInhibitor:
         self.tasks = []
         self.inhibiting = False  # This is a flag to indicate if we are currently inhibiting or not
 
+        self.updater = auto_update.GithubUpdater("JayFromProgramming", "QBT_inhibitor")
+        asyncio.get_event_loop().create_task(self.updater.run())
+
     def _task_done(self, task):
         if not self.stop:
             logging.info(f"Task {task.get_name()} failed, restarting")
@@ -109,6 +112,12 @@ class qbtInhibitor:
 
     async def run(self):
         while not self.stop:
+
+            if self.updater.new_version_available:
+                logging.info(f"New version available, updating")
+                await self.updater.preform_update()
+                self.updater.new_version_available = False
+
             logging.debug(f"Checking if we need to inhibit")
             if not self.qbt_connected:
                 logging.warning("qbittorrent is not connected, trying to connect")
