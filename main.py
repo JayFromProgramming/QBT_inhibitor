@@ -118,7 +118,7 @@ class qbtInhibitor:
         logging.info(f"New version available, asking user if they want to update")
         if not self.inhibiting:
             # Start a 1 minute timer to alert users over the api that an updating is going to be installed
-            update_time = datetime.datetime.now() + datetime.timedelta(minutes=0)
+            update_time = datetime.datetime.now() + datetime.timedelta(minutes=1)
             while datetime.datetime.now() < update_time:
                 if self.stop or self.inhibiting:
                     logging.info("Update cancelled")

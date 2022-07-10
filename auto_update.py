@@ -17,6 +17,14 @@ async def _get_installed_version():
         return "unknown"
 
 
+def cleanup():
+    # Look for the old_version.zip file and delete it and the recovery script
+    if os.path.exists("old_version.zip"):
+        os.remove("old_version.zip")
+    if os.path.exists("recovery.sh"):
+        os.remove("recovery.sh")
+
+
 class GithubUpdater:
 
     def __init__(self, owner: str, repo: str, restart_callback, on_update_available_callback=None):
@@ -25,6 +33,7 @@ class GithubUpdater:
         self.restart_callback = restart_callback
         self.on_update_available_callback = on_update_available_callback
         self.new_version_available = False
+        cleanup()
 
     async def _get_latest_release(self):
         async with aiohttp.ClientSession() as session:
