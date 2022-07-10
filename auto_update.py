@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+import zipfile
 
 import aiohttp
 
@@ -17,9 +19,11 @@ async def _get_installed_version():
 
 class GithubUpdater:
 
-    def __init__(self, owner: str, repo: str):
+    def __init__(self, owner: str, repo: str, restart_callback, on_update_available_callback=None):
         self.repo = repo
         self.owner = owner
+        self.restart_callback = restart_callback
+        self.on_update_available_callback = on_update_available_callback
         self.new_version_available = False
 
     async def _get_latest_release(self):
@@ -42,6 +46,23 @@ class GithubUpdater:
                 self.new_version_available = False
             await asyncio.sleep(30)
 
+    async def make_recovery_shell_script(self):
+        """Creates a shell script that can be used to restore the old version"""
+        if not self.new_version_available:
+            logging.info("No new version available")
+            return
+        logging.info(f"Creating recovery shell script")
+        with open("recovery.sh", "w") as f:
+            f.write("#!/bin/bash\n")  # Made by Copilot so it likely won't work
+            f.write(f"echo 'Restoring old version'\n")
+            f.write(f"mv old_version.zip new_version\n")
+            f.write(f"mv new_version.zip old_version.zip\n")
+            f.write(f"mv old_version old_version.zip\n")
+            f.write(f"mv new_version old_version\n")
+            f.write(f"echo 'Restored old version'\n")
+        os.chmod("recovery.sh", 0o755)
+        logging.info("Recovery shell script created")
+
     async def preform_update(self):
         """Downloads new version and replaces current version"""
         if not self.new_version_available:
@@ -58,8 +79,17 @@ class GithubUpdater:
                     if not chunk:
                         break
                     f.write(chunk)
+
+        # Zip the current version as a backup
+        with zipfile.ZipFile("old_version.zip", "w") as f:
+            for root, dirs, files in os.walk("."):
+                for file in files:
+                    f.write(os.path.join(root, file))
+
+        await self.make_recovery_shell_script()  # Create recovery script
+
+        # Replace the current version with the new version
         logging.info("Extracting new version")
-        import zipfile
         with zipfile.ZipFile("new_version.zip", "r") as zip_ref:
             zip_ref.extractall()
         logging.info("New version extracted")
@@ -67,4 +97,10 @@ class GithubUpdater:
         import shutil
         shutil.move("new_version", ".")
         logging.info("New version installed")
-
+        with open("version.txt", "w") as f:
+            f.write(release["tag_name"])
+        # Delete the zip file
+        os.remove("new_version.zip")
+        logging.info("New version zip file deleted")
+        # Restart the program
+        logging.info("Calling restart callback")
