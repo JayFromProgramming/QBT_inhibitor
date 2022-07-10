@@ -20,6 +20,7 @@ class InhibitSource:
         self.overridden_by = []  # This is a list of sources that are overriding us
         self.qbt_connection = None  # Indicates if the inhibitor is connected to qbt
         self.plex_connection = None
+        self.message = ""  # This is a message that is displayed to the user
 
     def update_state(self, **kwargs):
         """Update locals via kwargs"""

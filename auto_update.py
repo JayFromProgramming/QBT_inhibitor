@@ -42,9 +42,11 @@ class GithubUpdater:
             if latest_release["tag_name"] != await _get_installed_version():
                 logging.info(f"New version available: {latest_release['tag_name']}")
                 self.new_version_available = True
+                if self.on_update_available_callback is not None:
+                    await self.on_update_available_callback()
             else:
                 self.new_version_available = False
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
 
     async def make_recovery_shell_script(self):
         """Creates a shell script that can be used to restore the old version"""
@@ -81,9 +83,12 @@ class GithubUpdater:
                     f.write(chunk)
 
         # Zip the current version as a backup
+        installed_dir = os.path.dirname(os.path.realpath(__file__))
         with zipfile.ZipFile("old_version.zip", "w") as f:
-            for root, dirs, files in os.walk("."):
-                for file in files:
+            for root, dirs, files in os.walk(installed_dir):
+                for file in files:  # Make we don't include the file we are currently writing to
+                    if file == "old_version.zip":
+                        continue
                     f.write(os.path.join(root, file))
 
         await self.make_recovery_shell_script()  # Create recovery script
@@ -94,13 +99,15 @@ class GithubUpdater:
             zip_ref.extractall()
         logging.info("New version extracted")
         # Replace the current version with the new version
-        import shutil
-        shutil.move("new_version", ".")
         logging.info("New version installed")
         with open("version.txt", "w") as f:
             f.write(release["tag_name"])
         # Delete the zip file
         os.remove("new_version.zip")
         logging.info("New version zip file deleted")
-        # Restart the program
-        logging.info("Calling restart callback")
+        # Run PIP on requirements.txt
+        logging.info("Installing new version requirements")
+        os.system("pip install -r requirements.txt")
+        logging.info("New version requirements installed")
+        # Restart the server
+        await self.restart_callback()

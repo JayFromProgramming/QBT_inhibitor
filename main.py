@@ -1,3 +1,4 @@
+import datetime
 import json
 
 import qbittorrent
@@ -111,11 +112,32 @@ class qbtInhibitor:
     def _inhibit(self, source: InhibitSource, inhibit: bool):
         pass
 
-    def on_new_version(self):
-        pass
+    async def on_new_version(self):
+        """Called when a new version is available"""
+        # Check to make sure we are not currently inhibiting
+        logging.info(f"New version available, asking user if they want to update")
+        if not self.inhibiting:
+            # Start a 1 minute timer to alert users over the api that an updating is going to be installed
+            update_time = datetime.datetime.now() + datetime.timedelta(minutes=0)
+            while datetime.datetime.now() < update_time:
+                if self.stop or self.inhibiting:
+                    logging.info("Update cancelled")
+                    self.inhibit_sources.update_state(message=f"Update cancelled")
+                    break
+                await asyncio.sleep(1)
+                self.inhibit_sources.update_state(
+                    message=f"Updating in {(update_time - datetime.datetime.now()).seconds} seconds")
+            if not self.stop and not self.inhibiting:
+                logging.info("Update started")
+                self.inhibit_sources.update_state(message="Updating...")
+                await self.updater.preform_update()
 
-    def update_restart(self):
-        pass
+    async def update_restart(self):
+        """Called when the updater has finished updating"""
+        logging.info("Update finished, restarting")
+        self.inhibit_sources.update_state(message="Restarting...")
+        await asyncio.sleep(5)
+        self.stop = True
 
     async def run(self):
         while not self.stop:
