@@ -6,6 +6,7 @@ import zipfile
 import aiohttp
 
 logging.getLogger(__name__).setLevel(logging.DEBUG)
+installed_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 async def _get_installed_version():
@@ -92,7 +93,6 @@ class GithubUpdater:
                     f.write(chunk)
 
         # Zip the current version as a backup
-        installed_dir = os.path.dirname(os.path.realpath(__file__))
         with zipfile.ZipFile("old_version.zip", "w") as f:
             for root, dirs, files in os.walk(installed_dir):
                 for file in files:  # Make we don't include the file we are currently writing to

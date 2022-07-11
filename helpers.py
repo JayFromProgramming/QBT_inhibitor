@@ -118,6 +118,18 @@ class APIInhibitor(InhibitSource):
         return self.__str__()
 
 
+class NetInhibitor(InhibitSource):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        return f"Net"
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class APIMessageTX:
 
     def __init__(self, **kwargs):

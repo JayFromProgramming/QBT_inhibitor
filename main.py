@@ -1,13 +1,14 @@
 import datetime
 import json
 
-import qbittorrent
 from qbittorrent import Client
 
 import asyncio
+
+from net_detector import NetDetector
 from plex_detector import PlexDetector
 from web_api import WebAPI
-from helpers import InhibitSource, PlexInhibitor, WebInhibitor, APIInhibitor, InhibitHolder
+from helpers import InhibitSource, PlexInhibitor, WebInhibitor, APIInhibitor, InhibitHolder, NetInhibitor
 import logging
 import auto_update
 
@@ -80,6 +81,12 @@ class qbtInhibitor:
         webapi = WebAPI("localhost", 47675, 47676, webapi_source)
         self.inhibit_sources.append(webapi_source)
         self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))
+
+        logging.info(f"Starting net_detector")
+        net_source = NetInhibitor()
+        net = NetDetector("Celery", 2.5, net_source)
+        self.inhibit_sources.append(net_source)
+        self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
 
         for task in self.tasks:  # This is to make sure that we get exceptions in the tasks if they fail
             task.add_done_callback(self._task_done)
@@ -173,16 +180,14 @@ class qbtInhibitor:
 
             if should_inhibit:
                 if sources != self.last_inhibit_sources:
-                    for source in self.inhibit_sources:
-                        source.update_state(inhibiting=True, inhibited_by=sources, overridden=overridden)
+                    self.inhibit_sources.update_state(inhibiting=True, inhibited_by=sources, overridden=overridden)
                 if not self.inhibiting:
                     logging.info(f"Inhibiting qbittorrent because of {sources}")
                     self.inhibiting = True
                     self._set_rate_limit(True)
             else:
                 if self.inhibiting:
-                    for source in self.inhibit_sources:
-                        source.update_state(inhibiting=False, inhibited_by=sources, overridden=overridden)
+                    self.inhibit_sources.update_state(inhibiting=False, inhibited_by=sources, overridden=overridden)
                     logging.info(f"No longer inhibiting qbittorrent")
                     self.inhibiting = False
                     self._set_rate_limit(False)

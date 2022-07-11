@@ -1,2 +1,4 @@
 aiohttp~=3.8.1
 PlexAPI~=4.11.2
+python-qbittorrent~=0.4.2
+psutil~=5.9.1
