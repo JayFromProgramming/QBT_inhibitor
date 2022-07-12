@@ -199,7 +199,7 @@ class WebAPI:
             try:
                 logging.debug(f"Connection state updator is primed")
                 await event.wait()
-                logging.info(f"Updating all connections with new inhibit state")
+                logging.debug(f"Updating all connections with new inhibit state")
 
                 api_message = APIMessageTX(
                     msg_type="state_update",
@@ -243,13 +243,6 @@ class WebAPI:
     def _on_listener_done(self, task: asyncio.Task, conn_uuid) -> None:
         """Log when the listener exits, and remove the connection"""
         logging.info(f"Listener {task.get_name()} for {conn_uuid} exited")
-
-        self.connections[self.connections.index({"token": conn_uuid})]["lock"].release()
-        self.connections[self.connections.index({"token": conn_uuid})] = {
-            "token": conn_uuid,
-            "reader": None,
-            "writer": None,
-            "lock": None
-        }
+        pass
 
 

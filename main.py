@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO,
 
 class qbtInhibitor:
 
-    def __init__(self, qbt_url, qbt_username, qbt_password, plex_url, plex_token, main_limit=None, alt_limit=None):
+    def __init__(self, qbt_url, qbt_username, qbt_password, plex_url, plex_token, api_ip, main_limit=None, alt_limit=None):
         self.qbt_url = qbt_url
         self.qbt_username = qbt_username
         self.qbt_password = qbt_password
@@ -27,6 +27,9 @@ class qbtInhibitor:
         self.qbt = Client(self.qbt_url)
         self.qbt_connected = False
         self.qbt_was_connected = True
+
+        self.api_ip = api_ip
+
         self.qbt_main_limit = main_limit
         self.qbt_alt_limit = alt_limit
 
@@ -60,7 +63,7 @@ class qbtInhibitor:
                 # Remove any APIInhibitor from the list of sources
                 self.inhibit_sources.remove_by_type(APIInhibitor)
                 webapi_source = APIInhibitor()
-                webapi = WebAPI("localhost", 47675, 47676, webapi_source)
+                webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
                 self.inhibit_sources.append(webapi_source)
                 self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))
         else:
@@ -78,7 +81,7 @@ class qbtInhibitor:
 
         logging.info(f"Starting webapi tasks")
         webapi_source = APIInhibitor()
-        webapi = WebAPI("localhost", 47675, 47676, webapi_source)
+        webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
         self.inhibit_sources.append(webapi_source)
         self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))
 
@@ -206,7 +209,7 @@ async def main():
         config = json.load(config_file)
     async with qbtInhibitor(config['qbt_url'], config['qbt_user'],
                             config['qbt_password'], config['plex_url'], config['plex_token'],
-                            ) as inhibitor:
+                            config['api_ip']) as inhibitor:
         await inhibitor.run()
 
 
