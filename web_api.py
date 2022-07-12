@@ -27,8 +27,6 @@ class WebAPI:
         self.main_port = main_port
         self.alt_port = alt_port
         self.interface_class = interface_class
-        with open("api_config.json") as config_file:
-            self.config = json.load(config_file)
 
         self.refresh_task = asyncio.create_task(self._on_inhibit_state_update(self.interface_class.inhibit_event),
                                                 name="WebAPI: Background refresh")
