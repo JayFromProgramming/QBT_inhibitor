@@ -83,13 +83,14 @@ class GithubUpdater:
         logging.info(f"Downloading new version: {self.repo}")
         release = await self._get_latest_release()
 
-        # Zip the current version as a backup
-        with zipfile.ZipFile("old_version.zip", "w") as f:
-            for root, dirs, files in os.walk(installed_dir):
-                for file in files:  # Make we don't include the file we are currently writing to
-                    if file == "old_version.zip":
-                        continue
-                    f.write(os.path.join(installed_dir, file))
+        # # Zip the current version as a backup
+        # with zipfile.ZipFile("old_version.zip", "w") as f:
+        #     for root, dirs, files in os.walk(installed_dir):
+        #         for file in files:  # Make we don't include the file we are currently writing to
+        #             if file == "old_version.zip":
+        #                 continue
+        #
+        #             f.write(os.path.join(installed_dir, file))
 
         # Download the zip file from github and extract it
         async with aiohttp.ClientSession() as session:
