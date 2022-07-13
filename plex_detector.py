@@ -17,7 +17,11 @@ class PlexDetector:
         logging.info(f"Initializing plexDetector, connecting to {plex_url}")
         self.plex_url = plex_url
         self.plex_token = plex_token
-        self.plex_server = PlexServer(self.plex_url, self.plex_token)
+        try:
+            self.plex_server = PlexServer(self.plex_url, self.plex_token)
+        except Exception as e:
+            logging.error(f"Failed to connect to {plex_url}: {e}")
+            self.plex_server = None
         self.interface_class = interface_class
         logging.info(f"Connected to {plex_url}")
         self.interface_class.connected_to_plex = True

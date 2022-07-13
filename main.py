@@ -66,6 +66,15 @@ class qbtInhibitor:
                 webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
                 self.inhibit_sources.append(webapi_source)
                 self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))
+            elif task.get_name() == "net_detector":
+                logging.info(f"Restarting net_detector")
+                # Remove any NetInhibitor from the list of sources
+                self.inhibit_sources.remove_by_type(NetInhibitor)
+                net_source = NetInhibitor()
+                net = NetDetector("Celery", 0.5, net_source)
+                self.inhibit_sources.append(net_source)
+                self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
+
         else:
             logging.info(f"Task {task.get_name()} failed, but we are stopping, so not restarting")
 
@@ -87,7 +96,7 @@ class qbtInhibitor:
 
         logging.info(f"Starting net_detector")
         net_source = NetInhibitor()
-        net = NetDetector("Celery", 2.5, net_source)
+        net = NetDetector("wg0", 0.5, net_source)
         self.inhibit_sources.append(net_source)
         self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
 

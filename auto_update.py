@@ -94,7 +94,7 @@ class GithubUpdater:
 
         # Download the zip file from github and extract it
         async with aiohttp.ClientSession() as session:
-            req = await session.get(release["assets"][0]["browser_download_url"])
+            req = await session.get(release["zipball_url"])
             with open("new_version.zip", "wb") as f:
                 while True:
                     chunk = await req.content.read(1024)
