@@ -99,31 +99,38 @@ class GithubUpdater:
 
     async def preform_update(self):
         """Downloads the latest version and replaces the current version"""
+        try:
+            # Get release info
+            logging.info("Getting latest release")
+            latest_release = await self._get_latest_release()
 
-        # Get release info
-        logging.info("Getting latest release")
-        latest_release = await self._get_latest_release()
-        if latest_release is None:
-            logging.error("Failed to get latest release")
-            return
-        if "tag_name" not in latest_release:
-            logging.error("No latest release tag found")
-            return
+            if latest_release is None:
+                logging.error("Failed to get latest release")
+                return
 
-        logging.info("Preforming update... (using gitpull)")
-        result = os.popen("git pull").read()
-        logging.info(result)
-        if result.startswith("Already up to date."):
-            logging.info("Already up to date - not updating")
-            return
-        logging.info("Updated")
-        # Run post update requirement update
-        result = os.popen(f"pip install -r requirements.txt").read()
-        logging.info(result)
-        logging.info("Post update requirement update complete")
+            if "tag_name" not in latest_release:
+                logging.error("No latest release tag found")
+                return
 
-        with open("version.txt", "w") as f:
-            f.write(latest_release["tag_name"])
+            logging.info("Preforming update... (using gitpull)")
+            result = os.popen("git pull").read()
+            logging.info(result)
+            if result.startswith("Already up to date."):
+                logging.info("Already up to date - not updating")
+                return
+            elif result == "":
+                logging.info("Some unknown git error occured, not updating")
+                return
+            logging.info("Updated")
+            # Run post update requirement update
+            result = os.popen(f"pip install -r requirements.txt").read()
+            logging.info(result)
+            logging.info("Post update requirement update complete")
 
-        if self.restart_callback is not None:
-            await self.restart_callback()
+            with open("version.txt", "w") as f:
+                f.write(latest_release["tag_name"])
+
+            if self.restart_callback is not None:
+                await self.restart_callback()
+        except Exception as e:
+            logging.error(f"Failed to update: {e}\n{traceback.format_exc()}")
