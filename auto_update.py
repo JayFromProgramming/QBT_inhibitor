@@ -129,6 +129,9 @@ class GithubUpdater:
             logging.info(result)
             logging.info("Post update requirement update complete")
 
+            with open("version.txt", "w") as f:
+                f.write(latest_release["tag_name"])
+
             if self.restart_callback is not None:
                 await self.restart_callback()
         except Exception as e:
