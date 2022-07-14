@@ -131,7 +131,7 @@ class qbtInhibitor:
     def _inhibit(self, source: InhibitSource, inhibit: bool):
         pass
 
-    async def on_new_version(self):
+    async def on_new_version(self, newest, current):
         """Called when a new version is available"""
         # Check to make sure we are not currently inhibiting
         logging.info(f"New version available, asking user if they want to update")
