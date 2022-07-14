@@ -117,6 +117,8 @@ class GithubUpdater:
             logging.info(result)
             if result.startswith("Already up to date."):
                 logging.info("Already up to date - not updating")
+                with open("version.txt", "w") as f:
+                    f.write(latest_release["tag_name"])
                 return
             elif result == "":
                 logging.info("Some unknown git error occurred, not updating")
@@ -126,9 +128,6 @@ class GithubUpdater:
             result = os.popen(f"pip install -r requirements.txt").read()
             logging.info(result)
             logging.info("Post update requirement update complete")
-
-            with open("version.txt", "w") as f:
-                f.write(latest_release["tag_name"])
 
             if self.restart_callback is not None:
                 await self.restart_callback()
