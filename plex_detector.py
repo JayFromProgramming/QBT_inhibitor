@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 
 from plexapi.server import PlexServer
 
@@ -33,13 +34,13 @@ class PlexDetector:
             self.interface_class.total_sessions = 0
             for session in sessions:
                 if session.players[0].state == "playing":
-                    if session.players[0].location == "lan":
+                    if session.sessions[0].location == "lan":
                         continue
                     should_throttle = True
                     self.interface_class.total_sessions += 1
             return should_throttle
         except Exception as e:
-            logging.error(f"Failed to get plex activity: {e}")
+            logging.error(f"Failed to get plex activity: {e}\n{traceback.format_exc()}")
             self.interface_class.connected_to_plex = False
 
     def get_activity(self):
