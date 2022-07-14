@@ -119,7 +119,7 @@ class GithubUpdater:
                 logging.info("Already up to date - not updating")
                 return
             elif result == "":
-                logging.info("Some unknown git error occured, not updating")
+                logging.info("Some unknown git error occurred, not updating")
                 return
             logging.info("Updated")
             # Run post update requirement update
