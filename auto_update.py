@@ -111,4 +111,4 @@ class GithubUpdater:
         logging.info(result)
         logging.info("Post update requirement update complete")
         if self.restart_callback is not None:
-            self.restart_callback()
+            await self.restart_callback()
