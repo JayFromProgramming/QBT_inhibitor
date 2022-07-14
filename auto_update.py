@@ -78,7 +78,7 @@ class GithubUpdater:
             except Exception as e:
                 logging.error(f"Failed to check for updates: {e}\n{traceback.format_exc()}")
             finally:
-                await asyncio.sleep(60)
+                await asyncio.sleep(240)
 
     async def make_recovery_shell_script(self):
         """Creates a shell script that can be used to restore the old version"""
