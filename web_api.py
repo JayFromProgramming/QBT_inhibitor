@@ -224,7 +224,8 @@ class WebAPI:
                     overridden=self.interface_class.overridden,
                     qbt_connection=self.interface_class.qbt_connection,
                     plex_connection=self.interface_class.plex_connection,
-                    message=self.interface_class.message)
+                    message=self.interface_class.message,
+                    version=self.interface_class.version)
 
                 async with self.connections_lock:  # Acquire lock on the connections list to prevent concurrent access
                     for token, connection in self.connections.items():
