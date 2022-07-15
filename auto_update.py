@@ -119,6 +119,8 @@ class GithubUpdater:
                 logging.info("Already up to date - not updating")
                 with open("version.txt", "w") as f:
                     f.write(latest_release["tag_name"])
+                if self.restart_callback is not None:
+                    await self.restart_callback()
                 return
             elif result == "":
                 logging.info("Some unknown git error occurred, not updating")

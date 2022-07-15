@@ -111,14 +111,20 @@ class APIInhibitor(InhibitSource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.version = "unknown"
+        self.system_state_event = asyncio.Event()
+
+        # Callbacks
         self.service_restart_method = None
-        self.preform_update_method = None
+        self.service_update_response = None
 
     def __str__(self):
         return f"API"
 
     def __repr__(self):
         return self.__str__()
+
+    async def system_state_update(self, **kwargs):
+        """Update the system state"""
 
 
 class NetInhibitor(InhibitSource):

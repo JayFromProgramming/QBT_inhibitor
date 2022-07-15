@@ -144,7 +144,9 @@ class WebAPI:
                     elif msg.command == "restart":
                         await self.interface_class.service_restart_method()
                     elif msg.command == "pref_update":
-                        await self.interface_class.preform_update_method()
+                        await self.interface_class.service_update_response(True)
+                    elif msg.command == "deny_update":
+                        await self.interface_class.service_update_response(False)
                 else:
                     logging.warning(f"Unknown message type {msg.msg_type}")
 

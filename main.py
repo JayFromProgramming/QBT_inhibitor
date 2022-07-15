@@ -45,7 +45,7 @@ class qbtInhibitor:
 
         self.updater = auto_update.GithubUpdater("JayFromProgramming", "QBT_inhibitor",
                                                  self.update_restart, self.on_new_version)
-        asyncio.get_event_loop().create_task(self.updater.run())
+        self.update_task = asyncio.get_event_loop().create_task(self.updater.run())
 
     def _task_done(self, task):
         if not self.stop:
@@ -95,6 +95,7 @@ class qbtInhibitor:
         webapi_source = APIInhibitor()
         webapi_source.version = self.updater.get_installed_version()
         webapi_source.service_restart_method = self.update_restart
+        webapi_source.service_update_response = self.on_update_response
         webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
         self.webapi = webapi
         self.inhibit_sources.append(webapi_source)
@@ -142,6 +143,16 @@ class qbtInhibitor:
         # Check to make sure we are not currently inhibiting
         logging.info(f"New version available, asking user if they want to update")
         await self.webapi.on_update_available(newest, current)
+
+    async def on_update_response(self, response: bool):
+        """Called when the user responds to the update prompt"""
+        if response:
+            logging.info(f"User said yes, updating")
+            await self.start_update()
+        else:
+            logging.info(f"User said no, not updating")
+            # Terminate the auto-update process
+            self.update_task.cancel()
 
     async def start_update(self):
         """Starts the update process, called by the webapi"""
