@@ -110,6 +110,9 @@ class APIInhibitor(InhibitSource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.version = "unknown"
+        self.service_restart_method = None
+        self.preform_update_method = None
 
     def __str__(self):
         return f"API"

@@ -107,10 +107,11 @@ class WebAPI:
                     self.interface_class.should_inhibit = msg.inhibit
                     self.interface_class.overridden = msg.override
                     self.interface_class.inhibit_event.set()
-
                 elif msg.msg_type == "ack":
+                    """A client sends this message to acknowledge that it has received the last message"""
                     pass
                 elif msg.msg_type == "refresh":
+                    """A client sends this message when it wants to get a fresh copy of the current state"""
                     api_message = APIMessageTX(
                         msg_type="state_update",
                         inhibiting=self.interface_class.inhibiting,
@@ -119,10 +120,31 @@ class WebAPI:
                         qbt_connection=self.interface_class.qbt_connection,
                         plex_connection=self.interface_class.plex_connection,
                         message=self.interface_class.message)
-                    writer.write(api_message.encode('utf-8'))
                     logging.debug(f"Acquiring lock for {writer.get_extra_info('peername')}, {lock}")
                     async with lock:
+                        writer.write(api_message.encode('utf-8'))
                         await writer.drain()
+                elif msg.msg_type == "sys_command":
+                    """A client sends this message when it wants to send a command to the server"""
+                    logging.info(f"Received sys command {msg}")
+                    if msg.command == "shutdown":
+                        # Not allowed at this time
+                        async with self.connections_lock:
+                            self.connections[conn_uuid]["writer"].write(b"HTTP/1.1 403 Forbidden\r\n\r\n")
+                            await self.connections[conn_uuid]["writer"].drain()
+                            self.connections[conn_uuid]["writer"].close()
+                        return
+                    elif msg.command == "reboot":
+                        # Not allowed at this time
+                        async with self.connections_lock:
+                            self.connections[conn_uuid]["writer"].write(b"HTTP/1.1 403 Forbidden\r\n\r\n")
+                            await self.connections[conn_uuid]["writer"].drain()
+                            self.connections[conn_uuid]["writer"].close()
+                        return
+                    elif msg.command == "restart":
+                        await self.interface_class.service_restart_method()
+                    elif msg.command == "pref_update":
+                        await self.interface_class.preform_update_method()
                 else:
                     logging.warning(f"Unknown message type {msg.msg_type}")
 
@@ -157,27 +179,18 @@ class WebAPI:
         logging.info(f"New connection from {writer.get_extra_info('peername')} with token {token}")
         return token
 
-    # async def _on_renew(self, reader: StreamReader, writer: StreamWriter, token: str):
-    #     """Called when an existing connection is reestablished"""
-    #     async with self.connections_lock:
-    #         # Find the connection with the given token
-    #         for connection in self.connections:
-    #             if connection["token"] == token:
-    #                 # Replace the old reader and writer with the new ones
-    #                 connection["reader"] = reader
-    #                 connection["writer"] = writer
-    #                 connection["lock"] = asyncio.Lock()  # Create a new lock for the connection
-    #                 connection["lock"].release()  # Release the lock
-    #                 logging.debug(f"Renewed connection with token {token}")
-    #                 api_message = APIMessageTX(
-    #                     msg_type="renew_conn",
-    #                     token=token)
-    #                 async with connection["lock"]:
-    #                     writer.write(api_message.encode('utf-8'))
-    #                     await writer.drain()
-    #                 return token
-    #         logging.warning(f"Could not find connection with token {token}")
-    #         await self._on_new(reader, writer)
+    async def on_update_available(self, new_version: str, old_version: str):
+        """Called when a new update is available, and an update request needs to be sent to all clients"""
+        async with self.connections_lock:
+            for conn_uuid, conn_data in self.connections.items():
+                writer = conn_data["writer"]
+                api_message = APIMessageTX(
+                    msg_type="new_version",
+                    new_version=new_version,
+                    old_version=old_version)
+                async with conn_data["lock"]:
+                    writer.write(api_message.encode('utf-8'))
+                    await writer.drain()
 
     async def _on_disconnect(self, token: str):
         """Called when a connection is closed"""

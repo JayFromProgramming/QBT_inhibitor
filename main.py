@@ -18,7 +18,8 @@ logging.basicConfig(level=logging.INFO,
 
 class qbtInhibitor:
 
-    def __init__(self, qbt_url, qbt_username, qbt_password, plex_url, plex_token, api_ip, main_limit=None, alt_limit=None):
+    def __init__(self, qbt_url, qbt_username, qbt_password, plex_url, plex_token, api_ip, main_limit=None,
+                 alt_limit=None):
         self.qbt_url = qbt_url
         self.qbt_username = qbt_username
         self.qbt_password = qbt_password
@@ -29,6 +30,7 @@ class qbtInhibitor:
         self.qbt_was_connected = True
 
         self.api_ip = api_ip
+        self.webapi = None
 
         self.qbt_main_limit = main_limit
         self.qbt_alt_limit = alt_limit
@@ -63,6 +65,8 @@ class qbtInhibitor:
                 # Remove any APIInhibitor from the list of sources
                 self.inhibit_sources.remove_by_type(APIInhibitor)
                 webapi_source = APIInhibitor()
+                webapi_source.version = self.updater.get_installed_version()
+                webapi_source.service_restart_method = self.update_restart
                 webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
                 self.inhibit_sources.append(webapi_source)
                 self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))
@@ -74,7 +78,6 @@ class qbtInhibitor:
                 net = NetDetector("Celery", 0.5, net_source)
                 self.inhibit_sources.append(net_source)
                 self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
-
         else:
             logging.info(f"Task {task.get_name()} failed, but we are stopping, so not restarting")
 
@@ -90,13 +93,16 @@ class qbtInhibitor:
 
         logging.info(f"Starting webapi tasks")
         webapi_source = APIInhibitor()
+        webapi_source.version = self.updater.get_installed_version()
+        webapi_source.service_restart_method = self.update_restart
         webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
+        self.webapi = webapi
         self.inhibit_sources.append(webapi_source)
         self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))
 
         logging.info(f"Starting net_detector")
         net_source = NetInhibitor()
-        net = NetDetector("wg0", 0.5, net_source)
+        net = NetDetector("Celery", 0.5, net_source)
         self.inhibit_sources.append(net_source)
         self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
 
@@ -135,8 +141,13 @@ class qbtInhibitor:
         """Called when a new version is available"""
         # Check to make sure we are not currently inhibiting
         logging.info(f"New version available, asking user if they want to update")
+        await self.webapi.on_update_available(newest, current)
+
+    async def start_update(self):
+        """Starts the update process, called by the webapi"""
+        logging.info(f"Starting update, allowing 60 seconds so the user can cancel")
         if not self.inhibiting:
-            # Start a 1 minute timer to alert users over the api that an updating is going to be installed
+            # Start a 1-minute timer to alert users over the api that an updating is going to be installed
             update_time = datetime.datetime.now() + datetime.timedelta(minutes=1)
             while datetime.datetime.now() < update_time:
                 if self.stop or self.inhibiting:

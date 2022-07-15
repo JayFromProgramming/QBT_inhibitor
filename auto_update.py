@@ -37,7 +37,7 @@ class GithubUpdater:
             async with session.get(f"https://api.github.com/repos/{self.owner}/{self.repo}/releases/latest") as resp:
                 return await resp.json()
 
-    def _get_installed_version(self):
+    def get_installed_version(self):
         try:
             current_script_dir = pathlib.Path(__file__).parent.resolve()
             with open(os.path.join(current_script_dir, "version.txt")) as version_file:
@@ -48,7 +48,7 @@ class GithubUpdater:
 
     def version(self):
         """Returns the installed version"""
-        return self._get_installed_version()
+        return self.get_installed_version()
 
     async def run(self):
         logging.debug("Starting auto update check")
@@ -66,11 +66,11 @@ class GithubUpdater:
                     await asyncio.sleep(5)
                     continue
 
-                if latest_release["tag_name"] != self._get_installed_version():
+                if latest_release["tag_name"] != self.get_installed_version():
                     logging.info(f"New version available: {latest_release['tag_name']}")
                     self.new_version_available = True
                     if self.on_update_available_callback is not None:
-                        current_version = self._get_installed_version()
+                        current_version = self.get_installed_version()
                         await self.on_update_available_callback(newest=latest_release["tag_name"],
                                                                 current=current_version)
                 else:
