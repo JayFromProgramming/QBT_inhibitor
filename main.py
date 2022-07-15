@@ -67,6 +67,8 @@ class qbtInhibitor:
                 webapi_source = APIInhibitor()
                 webapi_source.version = self.updater.get_installed_version()
                 webapi_source.service_restart_method = self.update_restart
+                webapi_source.service_update_response = self.on_update_response
+                webapi_source.version = self.updater.get_installed_version()
                 webapi = WebAPI(self.api_ip, 47675, 47676, webapi_source)
                 self.inhibit_sources.append(webapi_source)
                 self.tasks.append(asyncio.get_event_loop().create_task(webapi.run(), name="api_server"))

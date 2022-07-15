@@ -119,7 +119,8 @@ class WebAPI:
                         overridden=self.interface_class.overridden,
                         qbt_connection=self.interface_class.qbt_connection,
                         plex_connection=self.interface_class.plex_connection,
-                        message=self.interface_class.message)
+                        message=self.interface_class.message,
+                        version=self.interface_class.version)
                     logging.debug(f"Acquiring lock for {writer.get_extra_info('peername')}, {lock}")
                     async with lock:
                         writer.write(api_message.encode('utf-8'))
