@@ -33,11 +33,15 @@ class PlexDetector:
             should_throttle = False
             self.interface_class.total_sessions = 0
             for session in sessions:
-                if session.players[0].state == "playing" or session.players[0].state == "buffering":
-                    if session.session[0].location == "lan":
-                        continue
-                    should_throttle = True
-                    self.interface_class.total_sessions += 1
+                try:
+                    if session.players[0].state == "playing" or session.players[0].state == "buffering":
+                        if session.session[0].location == "lan":
+                            continue
+                        should_throttle = True
+                        self.interface_class.total_sessions += 1
+                except Exception as e:
+                    logging.error(f"Failed to get session info: {e}")
+                    logging.error(traceback.format_exc())
             return should_throttle
         except Exception as e:
             logging.error(f"Failed to get plex activity: {e}\n{traceback.format_exc()}")
