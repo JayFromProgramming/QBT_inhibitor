@@ -132,6 +132,7 @@ class NetInhibitor(InhibitSource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.connected_to_net = False
 
     def __str__(self):
         return f"Net"

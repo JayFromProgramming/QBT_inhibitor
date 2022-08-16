@@ -231,7 +231,8 @@ class qbtInhibitor:
             try:
                 self.inhibit_sources.silent_update_state(
                     qbt_connection=self.qbt_connected, plex_connection=
-                    self.inhibit_sources.get_by_type(PlexInhibitor).connected_to_plex)
+                    self.inhibit_sources.get_by_type(PlexInhibitor).connected_to_plex,
+                    net_connection=self.inhibit_sources.get_by_type(NetInhibitor).connected_to_net)
             except Exception as e:
                 logging.error(f"Failed to update inhibit sources: {e}")
             await asyncio.sleep(5)
