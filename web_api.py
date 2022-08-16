@@ -119,6 +119,7 @@ class WebAPI:
                         overridden=self.interface_class.overridden,
                         qbt_connection=self.interface_class.qbt_connection,
                         plex_connection=self.interface_class.plex_connection,
+                        net_connection=self.interface_class.net_connection,
                         message=self.interface_class.message,
                         version=self.interface_class.version)
                     logging.debug(f"Acquiring lock for {writer.get_extra_info('peername')}, {lock}")
