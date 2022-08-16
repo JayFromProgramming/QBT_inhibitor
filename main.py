@@ -77,7 +77,7 @@ class qbtInhibitor:
                 # Remove any NetInhibitor from the list of sources
                 self.inhibit_sources.remove_by_type(NetInhibitor)
                 net_source = NetInhibitor()
-                net = NetDetector("Celery", 0.5, net_source)
+                net = NetDetector("wg0", 0.5, net_source)
                 self.inhibit_sources.append(net_source)
                 self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
         else:
@@ -105,7 +105,7 @@ class qbtInhibitor:
 
         logging.info(f"Starting net_detector")
         net_source = NetInhibitor()
-        net = NetDetector("Celery", 0.5, net_source)
+        net = NetDetector("wg0", 0.5, net_source)
         self.inhibit_sources.append(net_source)
         self.tasks.append(asyncio.get_event_loop().create_task(net.run(), name="net_detector"))
 

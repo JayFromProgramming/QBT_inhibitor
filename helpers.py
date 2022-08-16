@@ -18,8 +18,9 @@ class InhibitSource:
         self.inhibited_by = []  # This is a list of sources that are inhibiting us
         self.overridden = False  # This is a flag to indicate if we are currently overridden or not
         self.overridden_by = []  # This is a list of sources that are overriding us
-        self.qbt_connection = None  # Indicates if the inhibitor is connected to qbt
-        self.plex_connection = None
+        self.qbt_connection = None   # Indicates if the inhibitor is connected to qbt
+        self.plex_connection = None  # Indicates if the inhibitor is connected to plex
+        self.net_connection = None   # Indicates if the inhibitor is connected to wireguard
         self.message = ""  # This is a message that is displayed to the user
 
     def update_state(self, **kwargs):

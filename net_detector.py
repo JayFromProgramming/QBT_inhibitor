@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 
 import psutil
 
@@ -14,6 +15,7 @@ class NetDetector:
         self.net_interface = net_interface
         self.threshold = threshold
         self.interface_class = interface_class
+        self.interface_class.connected_to_net = True
 
     # Get the upload stats from the interface
     @staticmethod
@@ -32,8 +34,15 @@ class NetDetector:
         logging.info(f"Initializing netDetector, checking {self.net_interface} with threshold {self.threshold} mbit/s")
         while not self.interface_class.shutdown:
             logging.debug("Checking network upload")
-            if self.convert_to_mbit(await self.get_network_upload(self.net_interface)) > self.threshold:
-                self.interface_class.should_inhibit = True
+            try:
+                if self.convert_to_mbit(await self.get_network_upload(self.net_interface)) > self.threshold:
+                    self.interface_class.should_inhibit = True
+                else:
+                    self.interface_class.should_inhibit = False
+            except Exception as e:
+                logging.error(f"Failed to get network upload: {e}\n{traceback.format_exc()}")
+                self.interface_class.connected_to_net = False
             else:
-                self.interface_class.should_inhibit = False
-            await asyncio.sleep(5)
+                self.interface_class.connected_to_net = True
+            finally:
+                await asyncio.sleep(5)

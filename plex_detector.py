@@ -28,9 +28,9 @@ class PlexDetector:
         self.interface_class.connected_to_plex = True
 
     def _get_activity(self):
+        should_throttle = False
         try:
             sessions = self.plex_server.sessions()
-            should_throttle = False
             self.interface_class.total_sessions = 0
             for session in sessions:
                 try:
@@ -42,10 +42,12 @@ class PlexDetector:
                 except Exception as e:
                     logging.error(f"Failed to get session info: {e}")
                     logging.error(traceback.format_exc())
-            return should_throttle
         except Exception as e:
             logging.error(f"Failed to get plex activity: {e}\n{traceback.format_exc()}")
             self.interface_class.connected_to_plex = False
+        else:
+            self.interface_class.connected_to_plex = True
+        return should_throttle
 
     def get_activity(self):
         return self._get_activity()
