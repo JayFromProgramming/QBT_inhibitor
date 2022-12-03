@@ -1,4 +1,4 @@
-aiohttp~=3.8.1
-PlexAPI~=4.11.2
-python-qbittorrent~=0.4.2
-psutil~=5.9.1
+qbittorrent-api~=2022.11.40
+PlexAPI~=4.13.1
+psutil~=5.9.4
+aiohttp~=3.8.3

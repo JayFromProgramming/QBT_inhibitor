@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from qbittorrent import Client
+import qbittorrentapi
 
 import asyncio
 
@@ -25,7 +25,7 @@ class qbtInhibitor:
         self.qbt_password = qbt_password
         self.plex_url = plex_url
         self.plex_token = plex_token
-        self.qbt = Client(self.qbt_url)
+        self.qbt = qbittorrentapi.Client(host=self.qbt_url, username=self.qbt_username, password=self.qbt_password)
         self.qbt_connected = False
         self.qbt_was_connected = True
 
@@ -116,7 +116,7 @@ class qbtInhibitor:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self.stop = True
         logging.info(f"Exiting qbtInhibitor, logging out of qbittorrent")
-        self.qbt.logout()
+        self.qbt.auth_log_out()
         logging.info(f"Logged out of qbittorrent, stopping all tasks")
         for source in self.inhibit_sources:
             source.shutdown = True
@@ -127,15 +127,14 @@ class qbtInhibitor:
 
     def _qbt_login(self):
         try:
-            self.qbt.login(self.qbt_username, self.qbt_password)
+            self.qbt.auth_log_in(self.qbt_username, self.qbt_password)
             self.qbt_connected = True
         except Exception as e:
             logging.error(f"Failed to login to qbittorrent: {e}")
             self.qbt_connected = False
 
     def _set_rate_limit(self, rate_limit: bool):
-        if self.qbt.alternative_speed_status != rate_limit:
-            self.qbt.toggle_alternative_speed()
+        self.qbt.transfer_set_speed_limits_mode(rate_limit)
 
     def _inhibit(self, source: InhibitSource, inhibit: bool):
         pass
@@ -197,7 +196,7 @@ class qbtInhibitor:
 
             try:
                 logging.debug("Checking if we are still connected to qbt")
-                _ = self.qbt.global_download_limit
+                _ = self.qbt.transfer_download_limit()
             except Exception as e:
                 logging.error(f"Failed to check if we are still connected to qbt: {e}")
                 self.qbt_connected = False
