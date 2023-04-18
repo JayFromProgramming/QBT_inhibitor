@@ -35,8 +35,12 @@ class PlexDetector:
             for session in sessions:
                 try:
                     if session.players[0].state == "playing" or session.players[0].state == "buffering":
-                        if session.session[0].location == "lan":
-                            continue
+                        if isinstance(session.session, list):
+                            if session.session[0].location == "lan":
+                                continue
+                        else:
+                            if session.location == "lan":
+                                continue
                         should_throttle = True
                         self.interface_class.total_sessions += 1
                 except Exception as e:
