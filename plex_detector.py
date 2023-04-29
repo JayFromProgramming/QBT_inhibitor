@@ -1,5 +1,6 @@
 import asyncio
 import traceback
+import netifaces
 
 from plexapi.server import PlexServer
 
@@ -26,6 +27,26 @@ class PlexDetector:
         self.interface_class = interface_class
         logging.info(f"Connected to {plex_url}")
         self.interface_class.connected_to_plex = True
+        self.local_subnets = []
+        self._get_host_names()
+
+    def _get_host_names(self):
+        """
+        Gets all the ip addresses that can be bound to
+        """
+        interfaces = []
+        for interface in netifaces.interfaces():
+            try:
+                if netifaces.AF_INET in netifaces.ifaddresses(interface):
+                    for link in netifaces.ifaddresses(interface)[netifaces.AF_INET]:
+                        if link["addr"] != "":
+                            interfaces.append(link["addr"])
+            except Exception as e:
+                logging.debug(f"Error getting interface {interface}: {e}")
+                pass
+        for interface in interfaces:
+            logging.debug(f"Found interface {interface}")
+            self.local_subnets.append(".".join(interface.split(".")[0:3]))
 
     def _get_activity(self):
         should_throttle = False
@@ -35,6 +56,9 @@ class PlexDetector:
             for session in sessions:
                 try:
                     if session.players[0].state == "playing" or session.players[0].state == "buffering":
+                        if any([session.players[0].address.startswith(subnet) for subnet in self.local_subnets]):
+                            logging.debug(f"Player {session.players[0].address} is on the same subnet as the server")
+                            continue
                         should_throttle = True
                         self.interface_class.total_sessions += 1
                 except Exception as e:
